@@ -20,7 +20,7 @@ static_resources:
             - name: local_service
               domains: ["*"]
               routes:
-              - match: { prefix: "/" }
+              - match: { prefix: "/", grpc: {} }
                 route:
                   cluster: greeter_service
                   max_grpc_timeout: 0s
@@ -35,7 +35,7 @@ static_resources:
           - name: envoy.grpc_json_transcoder
             config:
               proto_descriptor: "/tmp/envoy/proto.pb"
-              services: ["HelloWorld"]
+              services: ["helloworld.Greeter"]
               print_options:
                 add_whitespace: true
                 always_print_primitive_fields: true
