@@ -1,0 +1,24 @@
+{
+  "name": "grpc-json-transcoder",
+  "version": "1.0.0",
+  "description": "Learning gRPC-JSON transcoder",
+  "main": "index.js",
+  "scripts": {
+    "install:dependencies": "npm install && cd server && npm install && cd ../client && npm install",
+    "clean:dependencies": "rm -rf node_modules && cd server && rm -rf node_modules && cd ../client && rm -rf node_modules",
+    "load:config": "env-cmd -f .config",
+    "load:env": "env-cmd -f .env",
+    "clean:client": "rm -rf build/",
+    "dev:client": "cd client && npm start",
+    "dev:server": "npm run load:config nodemon server/index.js",
+    "build:client": "npm run clean:client && cd client && npm run build && mv build ../build",
+    "start:server": "npm run load:config node server/index.js",
+    "start:production": "npm run build:client && npm run start:server"
+  },
+  "author": "Neil Leeson Syiemlieh",
+  "license": "ISC",
+  "devDependencies": {
+    "env-cmd": "^10.0.1",
+    "nodemon": "^2.0.2"
+  }
+}

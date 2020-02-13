@@ -1,0 +1,12 @@
+# dependencies
+node_modules/
+
+# production
+build/
+
+# google protobuf APIs cloned repos
+googleapis/
+protobuf/
+
+# protobuf descriptor set
+proto.pb
