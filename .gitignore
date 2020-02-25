@@ -5,8 +5,7 @@ node_modules/
 build/
 
 # google protobuf APIs cloned repos
-googleapis/
-protobuf/
+vendor/
 
 # protobuf descriptor set
 **/*.pb

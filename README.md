@@ -1,6 +1,12 @@
 # grpc-json-transcoder
 
-The cloning of Google protobuf API repos (given below) is based on the [gRPC-JSON transcoder documentation](https://www.envoyproxy.io/docs/envoy/v1.9.0/configuration/http_filters/grpc_json_transcoder_filter) (these docs kinda suck). This is required because the proto file `helloworld.proto` has other proto dependencies by Google. Ideally, the build artifacts of these dependencies would be downloaded from a registry and linked with `helloworld.proto`, all through the build tool. For a gradle project, these built artifacts are available on the maven central registry. But for an npm project, we would require JS stubs in the form of npm packages, hosted on an npm registry, of which there is none for these packages (AFAIK). Hence, we clone the repositories where these proto dependencies live and we provide their paths to the `protoc` compiler. For the envoy yaml config in this project, the instructions are given in this [blog post](https://blog.jdriven.com/2018/11/transcoding-grpc-to-http-json-using-envoy/).
+For gRPC-JSON transcoding, dependencies by Google such as `annotations.proto` are required to generate the protobuf descriptor set. This is based on the [gRPC-JSON transcoder documentation](https://www.envoyproxy.io/docs/envoy/v1.9.0/configuration/http_filters/grpc_json_transcoder_filter) (these docs kinda suck btw). These dependencies need to be pulled directly from their source code repositories, by specifying a repository url with a git tag or commit hash. Some package managers, such as Glide for Golang, provide an easy way to pull these dependencies without needing to manually clone their repositories. Gradle (Java) even provides [`"com.google.api.grpc:proto-google-common-protos"`](https://mvnrepository.com/artifact/com.google.api.grpc/proto-google-common-protos), removing the need to list out the dependencies' repositories ourselves.
+
+The npm tool doesn't do any of this.
+
+Hence, we clone the repositories where these proto dependencies live manually. Then we provide their paths to the `protoc` compiler.
+
+The instructions for configuring the envoy yaml file are given in this [blog post](https://blog.jdriven.com/2018/11/transcoding-grpc-to-http-json-using-envoy/).
 
 ## Requirements
 
@@ -8,13 +14,12 @@ The cloning of Google protobuf API repos (given below) is based on the [gRPC-JSO
 - protoc
 - docker
 
-## Setup
+## Development
 
-Clone the Google protobuf API repositories
+Clone the Google protobuf repositories
 
 ```sh
-$ git clone https://github.com/googleapis/googleapis
-$ git clone https://github.com/protocolbuffers/protobuf
+$ npm run clone:vendors
 ```
 
 Generate the protobuf descriptor set
@@ -24,13 +29,31 @@ $ chmod +x descriptor-gen.sh
 $ ./descriptor-gen.sh
 ```
 
-Build the docker image and spin up a container
+Build the docker image. This image will contain the `envoy.yaml` configuraion and the `proto.pb` descriptor set, used for gRPC-JSON transcoding. Then spin up a container with the appropriate port mapping.
 
 ```sh
 $ docker build . \
-    -t json-transcoder/envoy \
+    -t grpc-json-transcoder:latest \
     -f ./envoy.Dockerfile
-$ docker run -d json-transcoder/envoy \
+$ docker run -d \
     -p 8080:8080 \
-    -p 9901:9901
+    -p 9901:9901 \
+    grpc-json-transcoder:latest
 ```
+
+Run the Node gRPC server
+
+```sh
+$ npm run start:server
+```
+
+Using any http client, make calls to the envoy proxy, through the transcoding endpoints in `helloworld.proto`. These http calls will be mapped to gRPC service calls, and forwarded to the node gRPC server. That server's response will be mapped to an http response, and forwarded to the http client.
+
+```sh
+$ curl localhost:8080/say/foobar
+{
+ "message": "Hello, foobar!"
+}
+```
+
+When changing any of the gRPC-JSON transcoding mappings in `helloworld.proto`, you'll have to delete the old proto descriptor set (`$ npm run clean:descriptor`), generate a new one, and rebuild the docker image.
