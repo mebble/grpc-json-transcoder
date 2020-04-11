@@ -23,6 +23,12 @@ if (require.main === module) {
         sayHello: (call, callback) => {
             const message = `Hello, ${call.request.name}!`;
             callback(null, { message });
+        },
+        sayManyHellos: (call, callback) => {
+            call.write({ message: `Hello, ${call.request.name} one!` });
+            call.write({ message: `Hello, ${call.request.name} two!` });
+            call.write({ message: `Hello, ${call.request.name} three!` });
+            call.end();
         }
     });
     server.bind(`0.0.0.0:${PORT}`, grpc.ServerCredentials.createInsecure());

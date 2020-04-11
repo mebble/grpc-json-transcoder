@@ -10,6 +10,11 @@ service Greeter {
       get: "/say/{name}"
     };
   }
+  rpc SayManyHellos (HelloRequest) returns (stream HelloReply) {
+    option (google.api.http) = {
+      get: "/say/many/{name}"
+    };
+  }
 }
 
 message HelloRequest {
